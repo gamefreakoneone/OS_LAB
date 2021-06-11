@@ -1,111 +1,81 @@
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-int queue[100], q_front = 0, q_end = 0;
+#include <stdbool.h>
+int turn_around_time(int processes[], int n,
+                     int bt[], int wt[], int tat[])
+{
+    for (int i = 0; i < n; i++)
+        tat[i] = bt[i] + wt[i];
+    return 1;
+}
+int wait_time(int processes[], int n,
+              int bt[], int wt[], int quantum)
+{
+    int rem_bt[n];
+    for (int i = 0; i < n; i++)
+        rem_bt[i] = bt[i];
+    int t = 0;
+    while (1)
+    {
+        bool done = true;
+        for (int i = 0; i < n; i++)
+        {
+            if (rem_bt[i] > 0)
+            {
+                done = false;
+                if (rem_bt[i] > quantum)
+                {
+                    t += quantum;
+                    rem_bt[i] -= quantum;
+                }
+                else
+                {
+                    t = t + rem_bt[i];
+                    wt[i] = t - bt[i];
+                    rem_bt[i] = 0;
+                }
+            }
+        }
+        if (done == true)
+            break;
+    }
+    return 1;
+}
+int avg_time(int processes[], int n, int bt[], int quantum)
+{
+    int wt[n], tat[n], total_wt = 0, total_tat = 0;
+    wait_time(processes, n, bt, wt, quantum);
+    turn_around_time(processes, n, bt, wt, tat);
+    printf("Processes Burst Time Waiting Time turnaround time\n");
+    for (int i = 0; i < n; i++)
+    {
+        total_wt = total_wt + wt[i];
+        total_tat = total_tat + tat[i];
+        printf("\t%d\t\t\t%d\t\t\t%d\t\t\t%d\n", i + 1, bt[i], wt[i], tat[i]);
+    }
+    printf("Average waiting time = %f", (float)total_wt / (float)n);
+    printf("\nAverage turnaround time = %f\n", (float)total_tat / (float)n);
+    return 1;
+}
 
 int main()
 {
-    int n, quant;
-    printf("Enter no of processes: ");
+    int processes[5];
+    int burst_time[5];
+    int i, n, quantum;
+    printf("Enter number of processess ");
     scanf("%d", &n);
-    printf("\nEnter time quantum: ");
-    scanf("%d", &quant);
-    int at[n], bt[n], bt_comp[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, ct[n], tat[n], wt[n];
-    char p[n][3];
-    for (int i = 0; i < n; i++)
+    printf("enter processid of all process ");
+    for (i = 0; i < n; i++)
     {
-        printf("\nEnter arrival time and burst time:");
-        scanf("%d %d", &at[i], &bt[i]);
-        strcpy(p[i], "\n");
-        p[i][0] = 'P';
-        p[i][1] = i + '1';
-        p[i][2] = '\0';
+        scanf("%d", &processes[i]);
     }
-
-    for (int i = 0; i < n - 1; i++)
+    printf("enter bursttime of all process respectively ");
+    for (i = 0; i < n; i++)
     {
-        for (int j = 0; j < n - i - 1; j++)
-        {
-            if (at[j] > at[j + 1])
-            {
-                int temp = at[j];
-                at[j] = at[j + 1];
-                at[j + 1] = temp;
-                temp = bt[j];
-                bt[j] = bt[j + 1];
-                bt[j + 1] = temp;
-                char tmp[] = "\0";
-                strcpy(tmp, p[j]);
-                strcpy(p[j], p[j + 1]);
-                strcpy(p[j + 1], tmp);
-            }
-        }
+        scanf("%d", &burst_time[i]);
     }
-
-    int cpu_timer = 0;
-    int count_comp = 0;
-    fflush(stdout);
-    printf("\n\nGantt Chart :- ");
-    fflush(stdout);
-    while (1)
-    {
-        for (int i = 0; i < n; i++)
-            if (at[i] == cpu_timer)
-                queue[q_end++] = i;
-
-        if (q_end != q_front)
-        {
-            if ((bt_comp[queue[q_front]] % quant == 0 && bt_comp[queue[q_front]] != 0) && bt_comp[queue[q_front]] != bt[queue[q_front]])
-            {
-                ct[queue[q_front]] = cpu_timer;
-                fflush(stdout);
-                printf("%d %s %d\t", cpu_timer - quant, p[queue[q_front]], ct[queue[q_front]]);
-                fflush(stdout);
-                queue[q_end++] = queue[q_front];
-                q_front++;
-            }
-            if (bt_comp[queue[q_front]] == bt[queue[q_front]])
-            {
-                fflush(stdout);
-                printf("%d %s %d\t", ct[queue[q_end - 1]], p[queue[q_front]], cpu_timer);
-                fflush(stdout);
-                ct[queue[q_front]] = cpu_timer;
-                q_front++;
-                count_comp++;
-                if (count_comp == n)
-                    goto abc;
-            }
-            bt_comp[queue[q_front]]++;
-        }
-        if (count_comp == n)
-            break;
-        cpu_timer++;
-    }
-abc:
-    printf("\n");
-
-    float sum_tat = 0, sum_wt = 0;
-    for (int i = 0; i < n; i++)
-    {
-        tat[i] = ct[i] - at[i];
-        sum_tat += tat[i];
-        wt[i] = tat[i] - bt[i];
-        sum_wt += wt[i];
-    }
-
-    fflush(stdout);
-    printf("\n\nProcess  Arrival  Burst  Completion  Turnaround  Waiting\n");
-    fflush(stdout);
-    for (int i = 0; i < n; i++)
-    {
-        fflush(stdout);
-        printf("%s\t %d\t  %d\t %d\t     %d\t\t %d\n", p[i], at[i], bt[i], ct[i], tat[i], wt[i]);
-        fflush(stdout);
-    }
-
-    fflush(stdout);
-    printf("\n\nAvg. Turnaround time = %f\nAvg. Waiting time = %f\n", sum_tat / n, sum_wt / n);
-    fflush(stdout);
+    printf("enter time quantum");
+    scanf("%d", &quantum);
+    avg_time(processes, n, burst_time, quantum);
     return 0;
 }

@@ -1,64 +1,48 @@
 #include <stdio.h>
-#include <string.h>
 
-int main()
-{
-    int n;
-    printf("Enter no of processes: ");
-    scanf("%d", &n);
-    int at[n], bt[n], ct[n], tat[n], wt[n]; // at is arrival time, bt is burst time, ct is cpu timer ,tat is turn around time and wt is waiting time
-    char p[n][3]; // Process names
-    for (int i = 0; i < n; i++)
-    {
-        printf("\nEnter process no, arrival time and burst time:");
-        scanf("%s %d %d", p[i], &at[i], &bt[i]);
-    }
+int waitingtime(int proc[], int n,
+int burst_time[], int wait_time[]) {
+   wait_time[0] = 0;
+   for (int i = 1; i < n ; i++ )
+   wait_time[i] = burst_time[i-1] + wait_time[i-1] ;
+   return 0;
+}
 
-    for (int i = 0; i < n; i++)
-    {
-        for (int j = 0; j < n - i - 1; j++)
-        {
-            if (at[j] > at[j + 1])
-            {
-                int temp = at[j];
-                at[j] = at[j + 1];
-                at[j + 1] = temp;
-                temp = bt[j];
-                bt[j] = bt[j + 1];
-                bt[j + 1] = temp;
-                char tmp[3];
-                strcpy(tmp, p[j]);
-                strcpy(p[j], p[j + 1]);
-                strcpy(p[j + 1], tmp);
-            }
-        }
-    }
+int turnaroundtime( int proc[], int n,
+int burst_time[], int wait_time[], int tat[]) {
 
-    int cpu_timer = 0;
-    printf("\n\nGantt Chart :-");
-    for (int i = 0; i < n; i++)
-    {
-        // Arrangin the programs
-        if (at[i] > cpu_timer)
-            cpu_timer = at[i];
-        ct[i] = cpu_timer + bt[i];
-        printf("%d %s %d |\t", cpu_timer, p[i], ct[i]);
-        cpu_timer += bt[i];
-    }
+   int i;
+   for ( i = 0; i < n ; i++)
+   tat[i] = burst_time[i] + wait_time[i];
+   return 0;
+}
 
-    float sum_tat = 0, sum_wt = 0;
-    for (int i = 0; i < n; i++)
-    {
-        tat[i] = ct[i] - at[i];
-        sum_tat += tat[i];
-        wt[i] = tat[i] - bt[i];
-        sum_wt += wt[i];
-    }
+int avgtime( int proc[], int n, int burst_time[]) {
+   int wait_time[n], tat[n], total_wt = 0, total_tat = 0;
+   int i;
 
-    printf("\n\nProcess  Arrival  Burst  Turnaround  Waiting\n");
-    for (int i = 0; i < n; i++)
-        printf("%s\t %d\t  %d\t %d\t     %d\n", p[i], at[i], bt[i], tat[i], wt[i]);
+   waitingtime(proc, n, burst_time, wait_time);
 
-    printf("\n\nAvg. Turnaround time = %f\nAvg. Waiting time = %f", sum_tat / n, sum_wt / n);
-    return 0;
+   turnaroundtime(proc, n, burst_time, wait_time, tat);
+
+   printf("Processes  Burst   Waiting Turn around \n");
+
+   for ( i=0; i<n; i++) {
+      total_wt = total_wt + wait_time[i];
+      total_tat = total_tat + tat[i];
+      printf(" %d\t  %d\t\t %d \t%d\n", i+1, burst_time[i], wait_time[i], tat[i]);
+   }
+   printf("Average waiting time = %f\n", (float)total_wt / (float)n);
+   printf("Average turn around time = %f\n", (float)total_tat / (float)n);
+   return 0;
+}
+
+int main() {
+
+   int proc[] = { 1, 2, 3};
+   int n = sizeof proc / sizeof proc[0];
+
+   int burst_time[] = {15, 2, 7};
+   avgtime(proc, n, burst_time);
+   return 0;
 }
